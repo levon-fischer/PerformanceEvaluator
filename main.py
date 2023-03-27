@@ -64,9 +64,15 @@ def app():
     with tab1:
         #Make buttons to select Tier, Award, and category
         col1, col2, col3 = st.columns(3)
-        tier = col1.select('Tier', ['Junior Enlisted', 'NCO', 'SNCO', 'CGO', 'FGO', 'N/A'])
-        award = col2.select('Award', ['___ of the Quarter', 'ISR Tech', 'Volunteer'])
-        category = col3.select('Category', ['Primary Duties', 'Followership/Leadership', 'Whole Airman Concept'])
+        tier = col1.selectbox(label='Tier',
+                              options=('Junior Enlisted', 'NCO', 'SNCO', 'CGO', 'FGO', 'N/A'),
+                              index=0)
+        award = col2.selectbox(lable='Award',
+                               options=('___ of the Quarter', 'ISR Tech', 'Volunteer'),
+                               index=0)
+        category = col3.selectbox(lable='Category',
+                                  options=('Primary Duties', 'Followership/Leadership', 'Whole Airman Concept'),
+                                  index=0)
 
         st.text('Past the performance statement to be evaluated')
         with st.form('new_statement_form', clear_on_submit=True):
