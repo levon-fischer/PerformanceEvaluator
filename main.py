@@ -7,13 +7,23 @@ from engine import EvaluatorEngine
 
 def app():
 
+    # Page Config
+    st.set_page_config(
+        page_title='Performance Evaluator',
+        layout='wide',
+        menu_items={
+            'Get Help': None,
+            'Report a bug': 'mailto:levon.fischer@gmail.com',
+            'About': None
+        }
+    )
     # Some stateful variables
     if 'latest_insertions' not in st.session_state:
         st.session_state['latest_insertions'] = None
     if 'insertion_cancelled' not in st.session_state:
         st.session_state['insertion_cancelled'] = False
 
-    # Setup the engine
+    # Set up the engine
     @st.cache(allow_output_mutation=True)
     def create_engine():
         return EvaluatorEngine()
@@ -53,6 +63,10 @@ def app():
 
     with tab1:
         #Make buttons to select Tier, Award, and category
+        col1, col2, col3 = st.columns(3)
+        tier = col1.select('Tier', ['Junior Enlisted', 'NCO', 'SNCO', 'CGO', 'FGO', 'N/A'])
+        award = col2.select('Award', ['___ of the Quarter', 'ISR Tech', 'Volunteer'])
+        category = col3.select('Category', ['Primary Duties', 'Followership/Leadership', 'Whole Airman Concept'])
 
         st.text('Past the performance statement to be evaluated')
         with st.form('new_statement_form', clear_on_submit=True):
