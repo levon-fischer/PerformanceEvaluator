@@ -64,6 +64,13 @@ class EvaluatorEngine:
     def has_extracted_statement(self):
         return self._current_extracted_statement is not None
 
+    def extracted_statement(self):
+        """
+        Returns the current extracted statement as a list of dictionaries, for readability.
+        """
+        return[{'Statement': state[0], 'Tier': state[1], 'Award': state[2], 'Category': state[3], 'Score': state[4]}
+               for state in self._current_extracted_statement]
+
     def commit(self):
         """
         Commits the current statement to the database. If no statement has been extracted,
