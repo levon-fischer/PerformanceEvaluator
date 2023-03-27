@@ -67,10 +67,10 @@ def app():
         tier = col1.selectbox(label='Tier',
                               options=('Junior Enlisted', 'NCO', 'SNCO', 'CGO', 'FGO', 'N/A'),
                               index=0)
-        award = col2.selectbox(lable='Award',
+        award = col2.selectbox(label='Award',
                                options=('___ of the Quarter', 'ISR Tech', 'Volunteer'),
                                index=0)
-        category = col3.selectbox(lable='Category',
+        category = col3.selectbox(label='Category',
                                   options=('Primary Duties', 'Followership/Leadership', 'Whole Airman Concept'),
                                   index=0)
 
