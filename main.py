@@ -31,7 +31,7 @@ def app():
     engine = create_engine()
 
 
-    st.title('Performance Statement Evaluator')
+    st.title('The Fisch Tank')
     st.write('A simple app to evaluate a performance statement and then dump it into a database to query it later.')
 
     ###########
@@ -41,17 +41,27 @@ def app():
     # Get the OpenAI API key, whether from the OPENAI_API_KEY environment variable or from user input.
     st.sidebar.header("Parameters")
 
-    token = st.sidebar.text_input('OpenAI API access token',
-                                  openai.api_key if openai.api_key is not None else '',
+    token = st.sidebar.text_input(label= 'OpenAI API access token',
+                                  value= openai.api_key if openai.api_key is not None else '',
                                   type = 'password',
                                   help = 'Get it on https://beta.openai.com/')
 
-    engine.gpt_parameters['engine'] = st.sidebar.text_input('GPT Engine', 'text-davinci-003')
+    engine.gpt_parameters['engine'] = st.sidebar.text_input('GPT Engine', 'gpt-3.5-turbo')
     engine.gpt_parameters['temperature'] = st.sidebar.slider('GPT Temperature',
-                                                             value = 0.1,
+                                                             value = 0.7,
                                                              min_value = 0.0,
                                                              max_value= 1.0,
                                                              step = 0.1)
+    engine.gpt_parameters['frequency_penalty'] = st.sidebar.slider('GPT Frequency Penalty',
+                                                                   value=0.0,
+                                                                   min_value=0.0,
+                                                                   max_value=1.0,
+                                                                   step=0.1)
+    engine.gpt_parameters['presence_penalty'] = st.sidebar.slider('GPT Presence Penalty',
+                                                                  value=0.0,
+                                                                  min_value=0.0,
+                                                                  max_value=1.0,
+                                                                  step=0.1)
 
     engine.set_openai_api_key(token)
 
@@ -132,7 +142,7 @@ def app():
         st.success(f'Added {st.session_state["latest_insertions"]} statements to the database.')
         st.session_state['latest_insertions'] = None
         manual_check_pane.empty()
-    elif st.session_state['insertion_cancelled'] == True:
+    elif st.session_state['insertion_cancelled']:
         st.info('Insertion cancelled.')
         st.session_state['insertion_cancelled'] = False
         manual_check_pane.empty()
