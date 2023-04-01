@@ -1,5 +1,6 @@
 import streamlit as st
 import openai
+from prompts import award_dict, tier_dict, sq_pri_dict, wg_pri_dict
 
 import sys
 sys.path.append('.')
@@ -63,28 +64,31 @@ def app():
 
     with tab1:
         #Make buttons to select Tier, Award, and category
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         tier = col1.selectbox(label='Tier',
-                              options=('Junior Enlisted', 'NCO', 'SNCO', 'CGO', 'FGO', 'N/A'),
+                              options=tier_dict,
                               index=0)
         award = col2.selectbox(label='Award',
-                               options=('___ of the Quarter', 'ISR Tech', 'Volunteer'),
+                               options=award_dict,
                                index=0)
-        category = col3.selectbox(label='Category',
-                                  options=('Primary Duties', 'Followership/Leadership', 'Whole Airman Concept'),
-                                  index=0)
+        sq = col3.selectbox(label='Squadron',
+                            options=sq_pri_dict,
+                            index=0)
+        wg = col4.selectbox(label='Wing',
+                            options=wg_pri_dict,
+                            index=0)
 
-        st.text('Past the performance statement to be evaluated')
+        st.text('Paste the performance statement to be evaluated')
         with st.form('new_statement_form', clear_on_submit=True):
             new_statement_utterance = st.text_input('New Performance Statement', '', help='Paste your statement here.')
             add_statement = st.form_submit_button('Evaluate')
 
-        manual_check = st.checkbox('Check before adding', value = False)
+        manual_check = st.checkbox('Check before adding', value = True)
 
         # placeholder for where the manual check pane will be
         manual_check_pane = st.empty()
 
-        # auxilary function to commit extraction, will be used more than once below
+        # auxiliary function to commit extraction, will be used more than once below
         def aux_commit_extraction():
             st.session_state['latest_insertions'] = engine.extracted_statement()
             engine.commit()
@@ -94,7 +98,7 @@ def app():
         #
         if not engine.has_extracted_statement():
             if add_statement:
-                engine.extract_statement(new_statement_utterance)
+                engine.extract_statement(new_statement_utterance, award, tier, wg, sq)
 
         #
         # COMMIT: If now we have the extracted statement, prepare to commit or commit them directly.

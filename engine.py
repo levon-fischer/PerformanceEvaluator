@@ -3,6 +3,7 @@ import os
 import io
 import pandas as pd
 import logging
+from prompts import *
 
 class EvaluatorEngine:
     """
@@ -14,7 +15,7 @@ class EvaluatorEngine:
     def __init__(self, api_key = os.getenv("OPENAI_API_KEY"),
                  database_file_path = './data/default_database.csv',
                  gpt_engine = 'text-davinci-003',
-                 gpt_temperature=0.1):
+                 gpt_temperature=0.7):
         self._database_file_path = database_file_path
 
         # Load the database or create it from scratch if needed
@@ -53,11 +54,12 @@ class EvaluatorEngine:
     # Facts insertion workflow methods #
     ####################################
 
-    def extract_statement(self, statement_utterance):
+    def extract_statement(self, statement_utterance, award, tier, wg, sq):
         """
         Extracts facts from a natural language utterance. Returns a list of tuples (statement, tier, award, category, score).
         """
-        statement_tuples = self._postprocessor.string_to_tuples(self._gpt_complete(self._preprocessor.extraction_prompt(statement_utterance)))
+
+        statement_tuples = self._postprocessor.string_to_tuples(self._gpt_chat(self._preprocessor.extraction_prompt(statement_utterance, award, tier, wg, sq)))
         self._current_extracted_statement = statement_tuples
         return statement_tuples
 
@@ -117,7 +119,7 @@ class EvaluatorEngine:
     ###########
 
     def _gpt_complete(self, prompt, echo=False):
-
+        ### Likely to be replaced with _gpt_chat
         response = openai.Completion.create(
             engine = self.gpt_parameters['engine'],
             prompt = prompt,
@@ -130,7 +132,26 @@ class EvaluatorEngine:
             echo = echo
         )
 
-        completion = response['choices']['0']['text']
+        completion = response['choices'][0]['text']
+
+        return completion
+
+    def _gpt_chat(self, messages, stream=False, echo=False):
+
+        response = openai.ChatCompletion.create(
+            model = self.gpt_parameters['engine'],
+            messages = messages,
+            temperature = self.gpt_parameters['temperature'],
+            top_p = self.gpt_parameters['top_p'],
+            stream = stream,
+            stop = self.gpt_parameters['stop'],
+            max_tokens = self.gpt_parameters['max_tokens'],
+            presence_penalty = self.gpt_parameters['presence_penalty'],
+            frequency_penalty = self.gpt_parameters['frequency_penalty'],
+            #user = user
+        )
+
+        completion = response['choices'][0]['message']['content']
 
         return completion
 
@@ -165,29 +186,34 @@ class StatementPreprocessor:
     Preprocessor for the user input to GPT. Notably, includes the mechanisms to build prompts.
     """
 
-    def extraction_prompt(self, x, tier, award, category):
+    def extraction_prompt(self, x, award, tier, wg, sq):
 
-        prompt = \
+        main_prompt = \
 f"""
-You are a panel member for an Air Force awards board. Read the following performace statement and grade it on a scale of 1 to 10.
- - Tier: {tier}
- - Award type: {award}
- - Statement Category: {category}
- 
-Example input: "blah blah blah"
-Example output: "blah blah blah
-                score: 8/10"
-
-Example input: "blah blah blah"
-Example output: "blah blah blah
-                score: 8/10"
-
-Input: {x}
-Output: 
-
+This is the definition of a performance statement:
+    {OVERVIEW}
+    This is the definition of the award you are grading for:
+    {award_dict[award]}
+    This is the award nominee's rank tier and the expectations for that tier that you should take into account when grading:
+    {tier_dict[tier]}
+    This is the Wing Commander's priorities that you should take into account when grading:
+    {wg_pri_dict[wg]}
+    This is the Squadron Commander's priorities that you should take into account when grading:
+    {sq_pri_dict[sq]}
+    These are the Airman Leadership Qualities that you should grade the performance statement on:
+    {ALQ}
 """
-        logging.info(f'GPT Prompt: {prompt}')
-        return prompt
+        messages = [
+            {'role': 'system', 'content': SYSTEM},
+            {'role': 'user', 'content': main_prompt},
+            {'role': 'system', 'name': 'example_user', 'content': examples[0][0]},
+            {'role': 'system', 'name': 'example_assistant', 'content': examples[0][1]},
+            {'role': 'system', 'name': 'example_user', 'content': examples[1][0]},
+            {'role': 'system', 'name': 'example_assistant', 'content': examples[1][0]},
+            {'role': 'user', 'content': x}
+        ]
+        logging.info(f'GPT Prompt: {messages}')
+        return messages
 
 class StatementPostprocessor:
     """
