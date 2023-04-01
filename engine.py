@@ -4,6 +4,7 @@ import pandas as pd
 import logging
 import re
 import streamlit as st
+from datetime import datetime as dt
 
 from prompts import *
 
@@ -25,7 +26,9 @@ class EvaluatorEngine:
             self.database = pd.read_csv(self._database_file_path)
             logging.info(f'Loaded database from {self._database_file_path}.')
         except FileNotFoundError:
-            self.database = pd.DataFrame(columns=['statement', 'tier', 'award', 'category', 'score'])
+            self.database = pd.DataFrame(columns=['statement', 'score', 'user_score',
+                                                  'explanation', 'award', 'tier',
+                                                  'wg', 'sq', 'user', 'datetime'])
             self._save()
             logging.info(f'Created database in {self._database_file_path}')
 
@@ -61,14 +64,20 @@ class EvaluatorEngine:
     # Facts insertion workflow methods #
     ####################################
 
-    def extract_statement(self, statement_utterance):
+    def extract_statement(self, statement_utterance, user, user_score):
         """
         Extracts statement data from a natural language utterance. Returns a list of tuples (statement, tier, award, category, score).
         """
 
-        statement_tuples = self._postprocessor.string_to_tuples(self._gpt_chat(self._preprocessor.extraction_prompt(statement_utterance, self.statement_parameters)))
-        self._current_extracted_statement = statement_tuples
-        return statement_tuples
+        statement_tuple = self._postprocessor.result_to_tuple(
+            self._gpt_chat(self._preprocessor.extraction_prompt(statement_utterance, self.statement_parameters)),
+            self.statement_parameters,
+            user,
+            user_score)
+
+        self._current_extracted_statement = statement_tuple
+
+        return statement_tuple
 
     def has_extracted_statement(self):
         return self._current_extracted_statement is not None
@@ -77,8 +86,19 @@ class EvaluatorEngine:
         """
         Returns the current extracted statement as a list of dictionaries, for readability.
         """
-        return[{'Statement': state[0], 'Tier': state[1], 'Award': state[2], 'Category': state[3], 'Score': state[4]}
-               for state in self._current_extracted_statement]
+        s = self._current_extracted_statement
+        s_dict = {'Statement': s[0],
+                  'Score': s[1],
+                  'User Score': s[2],
+                  'Justification': s[3],
+                  'Award': s[4],
+                  'Tier': s[5],
+                  'Wing': s[6],
+                  'Squadron': s[7],
+                  'User': s[8],
+                  'Time': s[9]}
+
+        return s_dict
 
     def commit(self):
         """
@@ -108,24 +128,25 @@ class EvaluatorEngine:
 
         # reuse the extracted statement, if any
         if self._current_extracted_statement is None:
-            statement_tuples = self.extract_statement(statement_utterance)
+            statement_tuple = self.extract_statement(statement_utterance, user=None, user_score=None)
         else:
-            statement_tuples = self._current_extracted_statement
+            statement_tuple = self._current_extracted_statement
 
-        for statement_tuple in statement_tuples:
-            logging.info(f'Database has {len(self.database)} statements before insertion.')
-            logging.info(f'Inserting statement: {statement_tuple}')
+        logging.info(f'Database has {len(self.database)} statements before insertion.')
+        logging.info(f'Inserting statement: {statement_tuple}')
 
-            df_to_add = pd.DataFrame([statement_tuple], columns=['statement', 'tier', 'award', 'category', 'score'])
-            self.database = pd.concat([self.database, df_to_add], ignore_index=True)
+        df_to_add = pd.DataFrame([statement_tuple], columns=['statement', 'score', 'user_score',
+                                                             'explanation', 'award', 'tier',
+                                                             'wg', 'sq', 'user', 'datetime'])
+        self.database = pd.concat([self.database, df_to_add], ignore_index=True)
 
-            logging.info(f'Database has {len(self.database)} statements after insertion.')
+        logging.info(f'Database has {len(self.database)} statements after insertion.')
 
     ###########
     # GPT API #
     ###########
 
-    def _gpt_chat(self, messages, stream=False, echo=False):
+    def _gpt_chat(self, messages, stream=False):
 
         response = openai.ChatCompletion.create(
             model = self.gpt_parameters['engine'],
@@ -242,12 +263,19 @@ class StatementPostprocessor:
         else:
             logging.info('No explanation found.')
 
-    def string_to_tuples(self, result):
+    def result_to_tuple(self, result, parameters, user, user_score):
         """
         Converts a string that looks like a tuple to an actual Python tuple.
         """
         statement = result
         score = self.extract_score_from_result(result)
+        user_score = user_score
         explanation = self.extract_explanation_from_result(result)
+        award = parameters['award']
+        tier = parameters['tier']
+        wg = parameters['wg']
+        sq = parameters['sq']
+        user = user
+        date_time = dt.now()
 
-        return statement, score, explanation
+        return statement, score, user_score, explanation, award, tier, wg, sq, user, date_time

@@ -41,6 +41,9 @@ def app():
     # Get the OpenAI API key, whether from the OPENAI_API_KEY environment variable or from user input.
     st.sidebar.header("Parameters")
 
+    user = st.sidebar.text_input(label= 'User',
+                                 value= 'Levon')
+
     token = st.sidebar.text_input(label= 'OpenAI API access token',
                                   value= openai.api_key if openai.api_key is not None else '',
                                   type = 'password',
@@ -91,6 +94,7 @@ def app():
         st.text('Paste the performance statement to be evaluated')
         with st.form('new_statement_form', clear_on_submit=True):
             new_statement_utterance = st.text_input('New Performance Statement', '', help='Paste your statement here.')
+            user_score = st.number_input('Predicted Score', min_value=0.0, max_value=20.0, value=10.0, step=0.5)
             add_statement = st.form_submit_button('Evaluate')
 
         manual_check = st.checkbox('Check before adding', value = True)
@@ -104,11 +108,11 @@ def app():
             engine.commit()
 
         #
-        # EXTRACT: If we don't have extracted facts yet, let's try to do that.
+        # EXTRACT: If we don't have an extracted statement yet, let's try to do that.
         #
         if not engine.has_extracted_statement():
             if add_statement:
-                engine.extract_statement(new_statement_utterance, engine.statement_parameters)
+                engine.extract_statement(new_statement_utterance, user, user_score)
 
         #
         # COMMIT: If now we have the extracted statement, prepare to commit or commit them directly.
@@ -121,7 +125,7 @@ def app():
                 with manual_check_pane.container():
                     accept = st.button('Accept Score')
                     cancel = st.button('Cancel Score')
-                    st.write('Extracted facts:')
+                    st.write('Extracted statement:')
                     st.write(engine.extracted_statement())
 
                     if accept:
