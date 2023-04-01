@@ -1,9 +1,8 @@
 import openai
-import os
 import io
 import pandas as pd
 import logging
-
+import re
 import streamlit as st
 
 from prompts import *
@@ -40,6 +39,11 @@ class EvaluatorEngine:
                                'presence_penalty': 0.0,
                                'stop': None}
 
+        self.statement_parameters = {'award': award_dict['Performer of the Month'],
+                                     'tier': tier_dict['Amn'],
+                                     'wg': wg_pri_dict['480 ISRW'],
+                                     'sq': sq_pri_dict['30 IS']}
+
         self._current_extracted_statement = None
 
         # Create preprocessor and postprocessor for GPT inputs and outputs
@@ -57,12 +61,12 @@ class EvaluatorEngine:
     # Facts insertion workflow methods #
     ####################################
 
-    def extract_statement(self, statement_utterance, award, tier, wg, sq):
+    def extract_statement(self, statement_utterance):
         """
-        Extracts facts from a natural language utterance. Returns a list of tuples (statement, tier, award, category, score).
+        Extracts statement data from a natural language utterance. Returns a list of tuples (statement, tier, award, category, score).
         """
 
-        statement_tuples = self._postprocessor.string_to_tuples(self._gpt_chat(self._preprocessor.extraction_prompt(statement_utterance, award, tier, wg, sq)))
+        statement_tuples = self._postprocessor.string_to_tuples(self._gpt_chat(self._preprocessor.extraction_prompt(statement_utterance, self.statement_parameters)))
         self._current_extracted_statement = statement_tuples
         return statement_tuples
 
@@ -121,24 +125,6 @@ class EvaluatorEngine:
     # GPT API #
     ###########
 
-    def _gpt_complete(self, prompt, echo=False):
-        ### Likely to be replaced with _gpt_chat
-        response = openai.Completion.create(
-            engine = self.gpt_parameters['engine'],
-            prompt = prompt,
-            temperature = self.gpt_parameters['temperature'],
-            max_tokens = self.gpt_parameters['max_tokens'],
-            top_p = self.gpt_parameters['top_p'],
-            frequency_penalty = self.gpt_parameters['frequency_penalty'],
-            presence_penalty = self.gpt_parameters['presence_penalty'],
-            stop = self.gpt_parameters['stop'],
-            echo = echo
-        )
-
-        completion = response['choices'][0]['text']
-
-        return completion
-
     def _gpt_chat(self, messages, stream=False, echo=False):
 
         response = openai.ChatCompletion.create(
@@ -189,20 +175,20 @@ class StatementPreprocessor:
     Preprocessor for the user input to GPT. Notably, includes the mechanisms to build prompts.
     """
 
-    def extraction_prompt(self, x, award, tier, wg, sq):
+    def extraction_prompt(self, x, parameters):
 
         main_prompt = \
 f"""
 This is the definition of a performance statement:
     {OVERVIEW}
     This is the definition of the award you are grading for:
-    {award_dict[award]}
+    {parameters['award']}
     This is the award nominee's rank tier and the expectations for that tier that you should take into account when grading:
-    {tier_dict[tier]}
+    {parameters['tier']}
     This is the Wing Commander's priorities that you should take into account when grading:
-    {wg_pri_dict[wg]}
+    {parameters['wg']}
     This is the Squadron Commander's priorities that you should take into account when grading:
-    {sq_pri_dict[sq]}
+    {parameters['sq']}
     These are the Airman Leadership Qualities that you should grade the performance statement on:
     {ALQ}
 """
@@ -227,11 +213,41 @@ class StatementPostprocessor:
         """
         Extracts the score from the result string
         """
-        score = result[-6:]
-        return score
+        score_pattern = r'Total Score: (\d+(\.\d+)?)/20'
+        match = re.search(score_pattern, result)
 
-    def string_to_tuples(self, s):
+        if match:
+            score = float(match.group(1))
+            return score
+        else:
+            logging.info('No score found')
+
+    def extract_action_from_result(self, result):
+        action_pattern = r'- Action: (.*?)(?=Score:)'
+        match = re.search(action_pattern, result, re.DOTALL)
+
+        if match:
+            action = match.group(1).strip()
+            return action
+        else:
+            logging.info('No action explanation found.')
+
+    def extract_explanation_from_result(self, result):
+        explanation_pattern = r'(.*)(?=Total Score:)'
+        match = re.search(explanation_pattern, result, re.DOTALL)
+
+        if match:
+            explanation = match.group(1).strip()
+            return explanation
+        else:
+            logging.info('No explanation found.')
+
+    def string_to_tuples(self, result):
         """
         Converts a string that looks like a tuple to an actual Python tuple.
         """
-        return [eval(s.strip()) for s in self.extract_score_from_result(s)]
+        statement = result
+        score = self.extract_score_from_result(result)
+        explanation = self.extract_explanation_from_result(result)
+
+        return statement, score, explanation

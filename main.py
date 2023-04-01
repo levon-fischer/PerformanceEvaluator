@@ -75,18 +75,18 @@ def app():
     with tab1:
         #Make buttons to select Tier, Award, and category
         col1, col2, col3, col4 = st.columns(4)
-        tier = col1.selectbox(label='Tier',
-                              options=tier_dict,
-                              index=0)
-        award = col2.selectbox(label='Award',
-                               options=award_dict,
-                               index=0)
-        sq = col3.selectbox(label='Squadron',
-                            options=sq_pri_dict,
-                            index=0)
-        wg = col4.selectbox(label='Wing',
-                            options=wg_pri_dict,
-                            index=0)
+        engine.statement_parameters['tier'] = col1.selectbox(label='Tier',
+                                                             options=tier_dict,
+                                                             index=0)
+        engine.statement_parameters['award'] = col2.selectbox(label='Award',
+                                               options=award_dict,
+                                               index=0)
+        engine.statement_parameters['sq'] = col3.selectbox(label='Squadron',
+                                            options=sq_pri_dict,
+                                            index=0)
+        engine.statement_parameters['wg'] = col4.selectbox(label='Wing',
+                                            options=wg_pri_dict,
+                                            index=0)
 
         st.text('Paste the performance statement to be evaluated')
         with st.form('new_statement_form', clear_on_submit=True):
@@ -108,7 +108,7 @@ def app():
         #
         if not engine.has_extracted_statement():
             if add_statement:
-                engine.extract_statement(new_statement_utterance, award, tier, wg, sq)
+                engine.extract_statement(new_statement_utterance, engine.statement_parameters)
 
         #
         # COMMIT: If now we have the extracted statement, prepare to commit or commit them directly.
@@ -133,6 +133,9 @@ def app():
 
             else: # no manual check needed, lets just commit
                 aux_commit_extraction()
+
+    with tab2:
+        st.text('Database and Search coming soon.')
 
     ###################
     # Status messages #
