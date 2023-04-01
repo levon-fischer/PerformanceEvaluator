@@ -3,6 +3,9 @@ import os
 import io
 import pandas as pd
 import logging
+
+import streamlit as st
+
 from prompts import *
 
 class EvaluatorEngine:
@@ -12,9 +15,9 @@ class EvaluatorEngine:
     it provides the capability both to insert new statements and to query the database.
     """
 
-    def __init__(self, api_key = os.getenv("OPENAI_API_KEY"),
+    def __init__(self, api_key = st.secrets["OPENAI_API_KEY"],
                  database_file_path = './data/default_database.csv',
-                 gpt_engine = 'text-davinci-003',
+                 gpt_engine = 'gpt-3.5-turbo',
                  gpt_temperature=0.7):
         self._database_file_path = database_file_path
 
