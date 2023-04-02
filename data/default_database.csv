@@ -1,1 +1,2 @@
-statement,tier,award,category,score
+statement,tier,award,score,user_score,explanation,wg,sq,user,datetime
+Test if this works,Amn,of the Quarter,,10.0,,480 ISRW,30 IS,Levon,2023-04-01 23:10:48.611183

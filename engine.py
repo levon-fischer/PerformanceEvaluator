@@ -83,6 +83,9 @@ class EvaluatorEngine:
     def has_extracted_statement(self):
         return self._current_extracted_statement is not None
 
+    def has_valid_statement(self):
+        return self._current_extracted_statement[3] is not None
+
     def extracted_evaluation(self):
         """
         Returns the current extracted statement as a list of dictionaries, for readability.
@@ -163,6 +166,7 @@ class EvaluatorEngine:
         )
 
         completion = response['choices'][0]['message']['content']
+        logging.info(f'GPT Response: {completion}')
 
         return completion
 
@@ -263,6 +267,7 @@ class StatementPostprocessor:
             return explanation
         else:
             logging.info('No explanation found.')
+            logging.info(result)
 
     def result_to_tuple(self, result, statement, parameters, user, user_score):
         """

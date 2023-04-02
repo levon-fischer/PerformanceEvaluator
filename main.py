@@ -95,8 +95,9 @@ def app():
 
         st.text('Paste the performance statement to be evaluated')
         with st.form('new_statement_form', clear_on_submit=True):
-            new_statement_utterance = st.text_input('New Performance Statement', '', help='Paste your statement here.')
-            user_score = st.number_input('Predicted Score', min_value=0.0, max_value=20.0, value=10.0, step=0.5)
+            col1, col2 = st.columns((4, 1))
+            new_statement_utterance = col1.text_input('New Performance Statement', value='', max_chars=400, help='Paste your statement here.')
+            user_score = col2.number_input('Predicted Score', min_value=0.0, max_value=20.0, value=20.0, step=0.5, format="%.1f", help='What would you score this as (0-20)?')
             add_statement = st.form_submit_button('Evaluate')
 
         manual_check = st.checkbox('Check before adding', value = True)
@@ -121,13 +122,34 @@ def app():
         #
         if engine.has_extracted_statement():
 
+            # Check if it was a valid performance statement
+            if not engine.has_valid_statement():
+                with manual_check_pane.container():
+                    st.error('Could not reel in an evaluation! Check for performance statement structure.')
+
             # does the user want to manually check the extracted facts?
             if manual_check:
 
                 with manual_check_pane.container():
 
-                    st.write('Extracted statement:')
-                    st.write(engine.extracted_evaluation())
+                    e = engine.extracted_evaluation()
+
+                    st.header('Extracted statement:')
+                    st.write(e['Statement'])
+                    st.write('---')
+
+                    col1, col2, col3 = st.columns((1,1,1))
+                    with col1:
+                        st.header("Fisch's Score")
+                        st.subheader(e['Score'])
+                    with col3:
+                        st.header(f"{e['User']}'s Score")
+                        st.subheader(e['User Score'])
+
+                    st.header("Fisch's Justification")
+                    st.write(e['Justification'])
+
+
                     accept = st.button('Accept Score')
                     cancel = st.button('Cancel Score')
 
