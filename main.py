@@ -10,7 +10,7 @@ def app():
 
     # Page Config
     st.set_page_config(
-        page_title='Performance Evaluator',
+        page_title='Fisch Rank',
         layout='wide',
         initial_sidebar_state='expanded',
         menu_items={
@@ -32,7 +32,7 @@ def app():
     engine = create_engine()
 
 
-    st.title('The Fisch Tank')
+    st.title('The Fisch Rank')
     st.write('A simple app to evaluate a performance statement and then dump it into a database to query it later.')
 
     ###########
