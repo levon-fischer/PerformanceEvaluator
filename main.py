@@ -112,7 +112,6 @@ def app():
                                             options=wg_pri_dict,
                                             index=0)
 
-        st.text('Paste the performance statement to be evaluated')
         with st.form('new_statement_form', clear_on_submit=True):
             col1, col2 = st.columns((4, 1))
             new_statement_utterance = col1.text_input('New Performance Statement', value='', max_chars=400, help='Paste your statement here.')
@@ -183,6 +182,7 @@ def app():
 
                     elif cancel:
                         aux_cancel_extraction()
+                        manual_check_pane.empty()
 
             else: # no manual check needed, lets just commit
                 aux_commit_extraction()

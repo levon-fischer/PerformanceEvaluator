@@ -232,9 +232,9 @@ conduct of their lives. The winners are selected based on their leadership, job 
 and community involvement.
 """
 
-award_dict = {'Performer of the Month': performer_of_the_month,
-              'of the Quarter': of_the_quarter,
+award_dict = {'of the Quarter': of_the_quarter,
               'ISR Tech': isr_tech,
+              'Performer of the Month': performer_of_the_month,
               'of the Year': of_the_year,
               'AFISRAP': afisrap,
               'SIJAN': sijan,
