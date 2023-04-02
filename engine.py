@@ -60,17 +60,18 @@ class EvaluatorEngine:
 
         logging.info(f'Saved database in {self._database_file_path}.')
 
-    ####################################
-    # Facts insertion workflow methods #
-    ####################################
+    #########################################
+    # Evaluation insertion workflow methods #
+    #########################################
 
-    def extract_statement(self, statement_utterance, user, user_score):
+    def extract_evaluation(self, statement_utterance, user, user_score):
         """
         Extracts statement data from a natural language utterance. Returns a list of tuples (statement, tier, award, category, score).
         """
 
         statement_tuple = self._postprocessor.result_to_tuple(
             self._gpt_chat(self._preprocessor.extraction_prompt(statement_utterance, self.statement_parameters)),
+            statement_utterance,
             self.statement_parameters,
             user,
             user_score)
@@ -82,7 +83,7 @@ class EvaluatorEngine:
     def has_extracted_statement(self):
         return self._current_extracted_statement is not None
 
-    def extracted_statement(self):
+    def extracted_evaluation(self):
         """
         Returns the current extracted statement as a list of dictionaries, for readability.
         """
@@ -102,11 +103,11 @@ class EvaluatorEngine:
 
     def commit(self):
         """
-        Commits the current statement to the database. If no statement has been extracted,
+        Commits the current evaluation to the database. If no evaluation has been extracted,
         the method just does nothing.
         """
         if self._current_extracted_statement is not None:
-            self._insert_statement()
+            self._insert_evaluation()
             self._current_extracted_statement = None
             self._save()
         else:
@@ -121,14 +122,14 @@ class EvaluatorEngine:
         else:
             logging.info('Nothing to revert')
 
-    def _insert_statement(self, statement_utterance = None):
+    def _insert_evaluation(self, statement_utterance = None):
         """
         Inserts a statement into the database.
         """
 
         # reuse the extracted statement, if any
         if self._current_extracted_statement is None:
-            statement_tuple = self.extract_statement(statement_utterance, user=None, user_score=None)
+            statement_tuple = self.extract_evaluation(statement_utterance, user=None, user_score=None)
         else:
             statement_tuple = self._current_extracted_statement
 
@@ -263,11 +264,11 @@ class StatementPostprocessor:
         else:
             logging.info('No explanation found.')
 
-    def result_to_tuple(self, result, parameters, user, user_score):
+    def result_to_tuple(self, result, statement, parameters, user, user_score):
         """
         Converts a string that looks like a tuple to an actual Python tuple.
         """
-        statement = result
+        statement = statement
         score = self.extract_score_from_result(result)
         user_score = user_score
         explanation = self.extract_explanation_from_result(result)

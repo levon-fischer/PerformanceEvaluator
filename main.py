@@ -12,6 +12,7 @@ def app():
     st.set_page_config(
         page_title='Performance Evaluator',
         layout='wide',
+        initial_sidebar_state='expanded',
         menu_items={
             'Get Help': None,
             'Report a bug': 'mailto:levon.fischer@gmail.com',
@@ -104,7 +105,7 @@ def app():
 
         # auxiliary function to commit extraction, will be used more than once below
         def aux_commit_extraction():
-            st.session_state['latest_insertions'] = engine.extracted_statement()
+            st.session_state['latest_insertions'] = engine.extracted_evaluation()
             engine.commit()
 
         #
@@ -112,7 +113,7 @@ def app():
         #
         if not engine.has_extracted_statement():
             if add_statement:
-                engine.extract_statement(new_statement_utterance, user, user_score)
+                engine.extract_evaluation(new_statement_utterance, user, user_score)
 
         #
         # COMMIT: If now we have the extracted statement, prepare to commit or commit them directly.
@@ -123,10 +124,11 @@ def app():
             if manual_check:
 
                 with manual_check_pane.container():
+
+                    st.write('Extracted statement:')
+                    st.write(engine.extracted_evaluation())
                     accept = st.button('Accept Score')
                     cancel = st.button('Cancel Score')
-                    st.write('Extracted statement:')
-                    st.write(engine.extracted_statement())
 
                     if accept:
                         aux_commit_extraction()
