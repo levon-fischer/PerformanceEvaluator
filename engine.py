@@ -84,6 +84,7 @@ class EvaluatorEngine:
         return self._current_extracted_statement is not None
 
     def has_valid_statement(self):
+        logging.info(self._current_extracted_statement[3])
         return self._current_extracted_statement[3] is not None
 
     def extracted_evaluation(self):
@@ -247,6 +248,7 @@ class StatementPostprocessor:
             return score
         else:
             logging.info('No score found')
+            return None
 
     def extract_action_from_result(self, result):
         action_pattern = r'- Action: (.*?)(?=Score:)'
@@ -257,6 +259,7 @@ class StatementPostprocessor:
             return action
         else:
             logging.info('No action explanation found.')
+            return None
 
     def extract_explanation_from_result(self, result):
         explanation_pattern = r'(.*)(?=Total Score:)'
@@ -267,7 +270,7 @@ class StatementPostprocessor:
             return explanation
         else:
             logging.info('No explanation found.')
-            logging.info(result)
+            return None
 
     def result_to_tuple(self, result, statement, parameters, user, user_score):
         """

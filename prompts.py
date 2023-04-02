@@ -172,7 +172,8 @@ actions and decisions.
 
 tier_dict = {'Amn': amn,
              'NCO': nco,
-             'SNCO': snco}
+             'SNCO': snco,
+             'N/A': None}
 
 #########
 # Award #
@@ -236,7 +237,8 @@ award_dict = {'Performer of the Month': performer_of_the_month,
               'ISR Tech': isr_tech,
               'of the Year': of_the_year,
               'AFISRAP': afisrap,
-              'SIJAN': sijan}
+              'SIJAN': sijan,
+              'N/A': None}
 
 #######################
 # Squadron Priorities #
@@ -267,7 +269,8 @@ delivering Air-centered ISR to decision makers at all levels whenever duty calls
 be feared by the enemy and renowned by our allies.
 """
 
-sq_pri_dict = {'30 IS': thirty_is}
+sq_pri_dict = {'30 IS': thirty_is,
+               'N/A': None}
 
 ###################
 # Wing Priorities #
@@ -315,7 +318,8 @@ based production (OBP) and data proficiencies.
 and applications.
 """
 
-wg_pri_dict = {'480 ISRW': four_eighty_ISRW}
+wg_pri_dict = {'480 ISRW': four_eighty_ISRW,
+               'N/A': None}
 
 ########################
 # Example Input/Output #

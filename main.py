@@ -115,7 +115,8 @@ def app():
         #
         if not engine.has_extracted_statement():
             if add_statement:
-                engine.extract_evaluation(new_statement_utterance, user, user_score)
+                with st.spinner('Evaluating....'):
+                    engine.extract_evaluation(new_statement_utterance, user, user_score)
 
         #
         # COMMIT: If now we have the extracted statement, prepare to commit or commit them directly.
@@ -126,9 +127,11 @@ def app():
             if not engine.has_valid_statement():
                 with manual_check_pane.container():
                     st.error('Could not reel in an evaluation! Check for performance statement structure.')
+                    engine.cancel()
+                    st.session_state['insertion_cancelled'] = True
 
             # does the user want to manually check the extracted facts?
-            if manual_check:
+            elif manual_check:
 
                 with manual_check_pane.container():
 
