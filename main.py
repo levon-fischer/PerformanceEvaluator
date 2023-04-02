@@ -1,6 +1,7 @@
 import streamlit as st
 import openai
 from prompts import award_dict, tier_dict, sq_pri_dict, wg_pri_dict
+from streamlit.components.v1 import html
 
 import sys
 sys.path.append('.')
@@ -25,6 +26,24 @@ def app():
         st.session_state['latest_insertions'] = None
     if 'insertion_cancelled' not in st.session_state:
         st.session_state['insertion_cancelled'] = False
+
+    button = """
+    <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="levonfischer" data-color="#FFDD00" data-emoji="🍺"  data-font="Bree" data-text="Buy me a beer" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff" ></script>    """
+
+    html(button, height=70, width=220)
+
+    st.markdown(
+        """
+        <style>
+            iframe[width="220"] {
+                position: fixed;
+                bottom: 60px;
+                right: 40px;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # Set up the engine
     @st.cache_resource
@@ -110,6 +129,10 @@ def app():
             st.session_state['latest_insertions'] = engine.extracted_evaluation()
             engine.commit()
 
+        def aux_cancel_extraction():
+            engine.cancel()
+            st.session_state['insertion_cancelled'] = True
+
         #
         # EXTRACT: If we don't have an extracted statement yet, let's try to do that.
         #
@@ -127,8 +150,7 @@ def app():
             if not engine.has_valid_statement():
                 with manual_check_pane.container():
                     st.error('Could not reel in an evaluation! Check for performance statement structure.')
-                    engine.cancel()
-                    st.session_state['insertion_cancelled'] = True
+                    aux_cancel_extraction()
 
             # does the user want to manually check the extracted facts?
             elif manual_check:
@@ -137,7 +159,7 @@ def app():
 
                     e = engine.extracted_evaluation()
 
-                    st.header('Extracted statement:')
+                    st.header('Performance Statement:')
                     st.write(e['Statement'])
                     st.write('---')
 
@@ -160,8 +182,7 @@ def app():
                         aux_commit_extraction()
 
                     elif cancel:
-                        engine.cancel()
-                        st.session_state['insertion_cancelled'] = True
+                        aux_cancel_extraction()
 
             else: # no manual check needed, lets just commit
                 aux_commit_extraction()
@@ -174,13 +195,12 @@ def app():
     ###################
 
     if st.session_state['latest_insertions'] is not None:
-        st.success(f'Added {st.session_state["latest_insertions"]} statements to the database.')
+        st.success(f'Added the statement and evaluation to the database.')
         st.session_state['latest_insertions'] = None
         manual_check_pane.empty()
     elif st.session_state['insertion_cancelled']:
-        st.info('Insertion cancelled.')
+        st.info('Did not add the statement to the database.')
         st.session_state['insertion_cancelled'] = False
-        manual_check_pane.empty()
 
 
 if __name__ == '__main__':
