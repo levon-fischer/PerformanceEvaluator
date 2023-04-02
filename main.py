@@ -8,9 +8,10 @@ from engine import EvaluatorEngine
 
 def app():
 
-    # Page Config
+    # Page Config :fishing_pole_and_fish:
     st.set_page_config(
         page_title='Fisch Rank',
+        page_icon=':fishing_pole_and_fish:',
         layout='wide',
         initial_sidebar_state='expanded',
         menu_items={
