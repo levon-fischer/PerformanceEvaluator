@@ -30,12 +30,12 @@ def app():
     button = """
     <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="levonfischer" data-color="#FFDD00" data-emoji="🍺"  data-font="Bree" data-text="Buy me a beer" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff" ></script>    """
 
-    html(button, height=70, width=220)
+    html(button, height=70, width=250)
 
     st.markdown(
         """
         <style>
-            iframe[width="220"] {
+            iframe[width="250"] {
                 position: fixed;
                 bottom: 60px;
                 right: 40px;
