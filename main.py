@@ -27,7 +27,7 @@ def app():
         st.session_state['insertion_cancelled'] = False
 
     # Set up the engine
-    @st.cache(allow_output_mutation=True)
+    @st.cache_resource
     def create_engine():
         return EvaluatorEngine()
     engine = create_engine()
